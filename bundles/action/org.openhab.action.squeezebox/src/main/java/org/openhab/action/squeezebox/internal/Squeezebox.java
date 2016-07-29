@@ -280,13 +280,28 @@ public class Squeezebox {
             logger.trace("Sleeping for 1s for updated playlist to refresh", url);
 
             newNumTracks = currNumTracks;
+
+            /*
+             * There is a slight issue with this code. If you have squeezebox set to 500 max songs, and you have 500 max
+             * songs in the playlist,
+             * this won't increment to 501... so after 10 attempts we'll continue regardless, to account for this
+             *
+             * (problem is it's not a hardlimit to 500 as it's configurable. Set it higher to avoid this delay :))
+             */
+
+            int i = 0;
             while (newNumTracks == currNumTracks) {
+                logger.trace("Current: " + currNumTracks + " New: " + newNumTracks);
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(200);
                 } catch (InterruptedException e) {
                     continue;
                 }
                 newNumTracks = player.getNumberPlaylistTracks();
+                i++;
+                if (i > 10) {
+                    break;
+                }
             }
             logger.trace("New Playlist Track Number: '{}'", newNumTracks);
 
@@ -329,20 +344,24 @@ public class Squeezebox {
             logger.trace("Restoring Playing Time : '{}'", currPlayingTime);
             squeezeServer.setPlayingTime(playerId, currPlayingTime);
 
-            // Must sleep 350ms before restoring previous playback state...
-            try {
+            // Must sleep before restoring previous playback state...
 
-                while (true) {
+            while (true) {
+                try {
                     Thread.sleep(100);
-                    logger.trace("Waiting for player to be in play state - current state: {}", player.getMode());
-                    if (player.getMode() == Mode.play) {
-                        logger.trace("In play mode... continuing");
-                        Thread.sleep(500);
-                        break;
-                    }
+                } catch (InterruptedException e) {
+                    continue;
                 }
-
-            } catch (InterruptedException e) {
+                logger.trace("Waiting for player to be in play state - current state: {}", player.getMode());
+                if (player.getMode() == Mode.play) {
+                    logger.trace("In play mode... continuing");
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        continue;
+                    }
+                    break;
+                }
             }
 
         }
