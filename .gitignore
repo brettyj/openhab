@@ -21,3 +21,25 @@ itemDump.txt
 # IntelliJ files
 **/.idea
 **/*.iml
+.project
+.settings/org.eclipse.core.resources.prefs
+bundles/.project
+bundles/.settings/org.eclipse.core.resources.prefs
+bundles/action/.project
+bundles/action/.settings/org.eclipse.core.resources.prefs
+bundles/binding/.project
+bundles/binding/.settings/org.eclipse.core.resources.prefs
+bundles/io/.project
+bundles/io/.settings/org.eclipse.core.resources.prefs
+bundles/persistence/.project
+bundles/persistence/.settings/org.eclipse.core.resources.prefs
+features/.project
+features/.settings/org.eclipse.core.resources.prefs
+features/openhab-addons-external/.project
+features/openhab-addons-external/.settings/org.eclipse.core.resources.prefs
+features/openhab-addons-legacy/.project
+features/openhab-addons-legacy/.settings/org.eclipse.core.resources.prefs
+features/openhab-addons-verify/.project
+features/openhab-addons-verify/.settings/org.eclipse.core.resources.prefs
+features/openhab-addons/.project
+features/openhab-addons/.settings/org.eclipse.core.resources.prefs
