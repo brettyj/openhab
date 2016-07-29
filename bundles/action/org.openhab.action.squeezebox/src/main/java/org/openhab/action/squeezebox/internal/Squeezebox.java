@@ -278,12 +278,16 @@ public class Squeezebox {
             logger.trace("Adding URL to current playlist '{}' to play", url);
             squeezeServer.addPlaylistItem(playerId, url);
             logger.trace("Sleeping for 1s for updated playlist to refresh", url);
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                continue;
+
+            newNumTracks = currNumTracks;
+            while (newNumTracks == currNumTracks) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    continue;
+                }
+                newNumTracks = player.getNumberPlaylistTracks();
             }
-            newNumTracks = player.getNumberPlaylistTracks();
             logger.trace("New Playlist Track Number: '{}'", newNumTracks);
 
             squeezeServer.playPlaylistItem(playerId, newNumTracks - 1);
@@ -324,11 +328,23 @@ public class Squeezebox {
             squeezeServer.playPlaylistItem(playerId, currPlaylistIndex);
             logger.trace("Restoring Playing Time : '{}'", currPlayingTime);
             squeezeServer.setPlayingTime(playerId, currPlayingTime);
-        }
-        // Must sleep 350ms before restoring previous playback state...
-        try {
-            Thread.sleep(350);
-        } catch (InterruptedException e) {
+
+            // Must sleep 350ms before restoring previous playback state...
+            try {
+
+                while (true) {
+                    Thread.sleep(100);
+                    logger.trace("Waiting for player to be in play state - current state: {}", player.getMode());
+                    if (player.getMode() == Mode.play) {
+                        logger.trace("In play mode... continuing");
+                        Thread.sleep(500);
+                        break;
+                    }
+                }
+
+            } catch (InterruptedException e) {
+            }
+
         }
 
         // restore play mode state
@@ -341,8 +357,10 @@ public class Squeezebox {
                 squeezeServer.pause(playerId);
             }
         } else if (playerMode == Mode.pause) {
+            logger.trace("Restoring player to previous state: paused");
             squeezeServer.pause(playerId);
         } else {
+            logger.trace("Restoring player to previous state: stopped");
             squeezeServer.stop(playerId);
         }
 
@@ -359,6 +377,17 @@ public class Squeezebox {
             logger.trace("Restoring player to previous state: off");
             squeezeServer.powerOff(playerId);
         }
+
+        // Sometimes it still seems to play even though we've tried to pause. This is a catch all attempt.
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+        }
+        if (playerMode == Mode.pause && player.getMode() == Mode.play) {
+            logger.trace("Attempting to (again) restore player to previous state: paused");
+            squeezeServer.pause(playerId);
+        }
+
         logger.trace("*****DONE SPEECH****** Player: '{}'", playerId);
         return true;
     }
